@@ -174,6 +174,7 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   scripts/tool_communication.py
   scripts/linear_axis_action_server.py
+  scripts/linear_axis_adapter.py
   scripts/linear_axis_runner.py
   scripts/example_move.py
   scripts/start_ursim.sh

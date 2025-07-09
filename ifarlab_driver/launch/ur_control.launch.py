@@ -297,10 +297,10 @@ def launch_setup(context, *args, **kwargs):
         arguments=["-d", rviz_config_file],
     )
 
-    linear_axis_action_server_node = Node(
+    linear_axis_adapter_node = Node(
         package="ifarlab_driver",
-        executable="linear_axis_action_server.py",
-        name="linear_axis_action_server",
+        executable="linear_axis_adapter.py",
+        name="linear_axis_adapter_node",
         output="screen"
     )
   
@@ -359,7 +359,7 @@ def launch_setup(context, *args, **kwargs):
         urscript_interface,
         robot_state_publisher_node,
         rviz_node,
-        linear_axis_action_server_node,
+        linear_axis_adapter_node,
     ] + controller_spawners
 
     return nodes_to_start

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#Şu anda bu kod cm hesabına göre çalışıyor.
+#Şu anda bu kod m hesabına göre çalışıyor.
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile
