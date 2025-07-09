@@ -2,6 +2,14 @@ controller_manager:
   ros__parameters:
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
+      joints:
+        - shoulder_pan_joint
+        - shoulder_lift_joint
+        - elbow_joint
+        - wrist_1_joint
+        - wrist_2_joint
+        - wrist_3_joint
+        - linear_axis_moving_joint
 
     io_and_status_controller:
       type: ur_controllers/GPIOController
@@ -182,16 +190,4 @@ tcp_pose_broadcaster:
 tool_contact_controller:
   ros__parameters:
     tf_prefix: "$(var tf_prefix)"
-    
-linear_axis_controller:
-  ros__parameters:
-    type: "position_controllers/JointPositionController"
-    joint: "linear_axis_moving_joint"
-    # PID kazançları sıfır veya çok düşük olmalı, çünkü Festo sürücüsü kendi kontrolünü yapıyor.
-    pid:
-      p: 0.0
-      i: 0.0
-      d: 0.0
-    # Önemli: Bu denetleyiciye ekstra parametreler eklemeyeceğiz
-    # çünkü donanım etkileşimi Python adaptör düğümünüz tarafından yönetiliyor.
-    # Bu denetleyici sadece MoveIt2'den gelen komutları yayınlayacak.
+

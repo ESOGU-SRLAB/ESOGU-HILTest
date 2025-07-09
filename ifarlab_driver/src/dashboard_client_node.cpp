@@ -49,7 +49,7 @@ int main(int argc, char** argv)
   rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared("ur_dashboard_client");
 
   // The IP address under which the robot is reachable.
-  std::string robot_ip = node->declare_parameter<std::string>("robot_ip", "192.168.56.101");
+  std::string robot_ip = node->declare_parameter<std::string>("robot_ip", "192.168.4.5");
   node->get_parameter<std::string>("robot_ip", robot_ip);
 
   ifarlab_driver::registerUrclLogHandler("");  // Set empty tf_prefix at the moment

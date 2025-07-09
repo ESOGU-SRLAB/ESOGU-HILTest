@@ -16,7 +16,6 @@ from launch.substitutions import (
     PathJoinSubstitution,
 )
 
-
 def launch_setup(context, *args, **kwargs):
     # Initialize Arguments
     robot_ip = LaunchConfiguration("robot_ip")

@@ -45,7 +45,7 @@ from test_common import (  # noqa: E402
     generate_driver_test_description,
 )
 
-ROBOT_IP = "192.168.56.101"
+ROBOT_IP = "192.168.4.5"
 
 
 @pytest.mark.launch_test

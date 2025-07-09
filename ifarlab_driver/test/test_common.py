@@ -356,7 +356,7 @@ def generate_dashboard_test_description():
             )
         ),
         launch_arguments={
-            "robot_ip": "192.168.56.101",
+            "robot_ip": "192.168.4.5",
         }.items(),
     )
 
@@ -373,7 +373,7 @@ def generate_driver_test_description(
     ur_type = LaunchConfiguration("ur_type")
 
     launch_arguments = {
-        "robot_ip": "192.168.56.101",
+        "robot_ip": "192.168.4.5",
         "ur_type": ur_type,
         "launch_rviz": "false",
         "controller_spawner_timeout": str(controller_spawner_timeout),

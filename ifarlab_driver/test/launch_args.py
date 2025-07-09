@@ -68,7 +68,7 @@ from test_common import (  # noqa: E402
 def generate_test_description(launch_dashboard_client):
     ur_type = LaunchConfiguration("ur_type")
     launch_arguments = {
-        "robot_ip": "192.168.56.101",
+        "robot_ip": "192.168.4.5",
         "ur_type": ur_type,
         "launch_rviz": "false",
         "controller_spawner_timeout": str(120),

@@ -18,7 +18,7 @@ With that, you can launch your specific robot with the correct calibration using
 
    $ ros2 launch ur_robot_driver ur_control.launch.py \
      ur_type:=ur5e \
-     robot_ip:=192.168.56.101 \
+     robot_ip:=192.168.4.5 \
      kinematics_params_file:="${HOME}/my_robot_calibration.yaml"
 
 Adapt the robot model matching to your robot.

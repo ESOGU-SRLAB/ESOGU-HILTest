@@ -63,7 +63,7 @@ RobotStateHelper::RobotStateHelper(const rclcpp::Node::SharedPtr& node)
   node->declare_parameter("headless_mode", false);
   headless_mode_ = node->get_parameter("headless_mode").as_bool();
 
-  node->declare_parameter("robot_ip", "192.168.56.101");
+  node->declare_parameter("robot_ip", "192.168.4.5");
   robot_ip_ = node->get_parameter("robot_ip").as_string();
 
   primary_client_ = std::make_shared<urcl::primary_interface::PrimaryClient>(robot_ip_, notifier_);
