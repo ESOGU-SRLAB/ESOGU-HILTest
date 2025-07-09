@@ -1,0 +1,850 @@
+<robot name="ifarlab" xmlns:xacro="http://ros.org/xacro">
+  <!-- <xacro:include filename="$(find ifarlab_description)/urdf/ur10e_transmissions.xacro"/> -->
+  <xacro:arg name="joint_limit_params" default="$(find ifarlab_description)/config/joint_limits.yaml"/>
+  <xacro:arg name="kinematics_params" default="$(find ifarlab_description)/config/default_kinematics.yaml"/>
+  <xacro:arg name="physical_params" default="$(find ifarlab_description)/config/physical_parameters.yaml"/>
+  <xacro:arg name="visual_params" default="$(find ifarlab_description)/config/visual_parameters.yaml"/>
+  <xacro:arg name="transmission_hw_interface" default=""/>
+  <xacro:arg name="safety_limits" default="false"/>
+  <xacro:arg name="safety_pos_margin" default="0.15"/>
+  <xacro:arg name="safety_k_position" default="20"/>
+  <!-- ros2_control related parameters -->
+  <xacro:arg name="headless_mode" default="false" />
+  <xacro:arg name="robot_ip" default="192.168.4.5" />
+  <xacro:arg name="script_filename" default=""/>
+  <xacro:arg name="output_recipe_filename" default=""/>
+  <xacro:arg name="input_recipe_filename" default=""/>
+  <xacro:arg name="reverse_ip" default="0.0.0.0"/>
+  <xacro:arg name="script_command_port" default="50004"/>
+  <xacro:arg name="reverse_port" default="50001"/>
+  <xacro:arg name="script_sender_port" default="50002"/>
+  <xacro:arg name="trajectory_port" default="50003"/>
+  <!--   tool communication related parameters-->
+  <xacro:arg name="use_tool_communication" default="false" />
+  <xacro:arg name="tool_voltage" default="0" />
+  <xacro:arg name="tool_parity" default="0" />
+  <xacro:arg name="tool_baud_rate" default="115200" />
+  <xacro:arg name="tool_stop_bits" default="1" />
+  <xacro:arg name="tool_rx_idle_chars" default="1.5" />
+  <xacro:arg name="tool_tx_idle_chars" default="3.5" />
+  <xacro:arg name="tool_device_name" default="/tmp/ttyUR" />
+  <xacro:arg name="tool_tcp_port" default="54321" />
+  <!-- Simulation parameters -->
+  <xacro:arg name="use_fake_hardware" default="false" />
+  <xacro:arg name="fake_sensor_commands" default="false" />
+  <xacro:arg name="simulation_controllers" default="" />
+  <!-- initial position for simulations (Fake Hardware, Gazebo, Ignition) -->
+  <xacro:arg name="initial_positions_file" default="$(find ifarlab_description)/config/initial_positions.yaml"/>
+  <!-- convert to property to use substitution in function -->
+  <xacro:property name="initial_positions_file" default="$(arg initial_positions_file)"/>
+  <xacro:property name="tf_prefix" value="" />
+  <xacro:arg name="name" default="ur10e" />
+
+  <!-- Materials -->
+  <material name="silver">
+    <color rgba="0.7 0.7 0.7 1.0"/>
+  </material>
+  <material name="LightGrey">
+    <color rgba="0.7 0.7 0.7 1.0"/>
+  </material>
+
+  <!-- World link -->
+  <link name="world"/>
+
+  <!-- Base link -->
+  <link name="base_link">
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.11578560444646112 1.1997807817885673 0.4198575454601515"/>
+      <mass value="54.501673015936554"/>
+      <inertia ixx="28.453985" ixy="-0.075126" ixz="-0.006467" iyy="1.801962" iyz="0.004704" izz="27.627414"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/base_link.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/base_link.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  
+  <!-- Chassis link -->
+  <link name="chassis">
+    <inertial>
+      <origin rpy="0 0 0" xyz="-1.2936436978144956 1.434305900139973 1.1195492278047758"/>
+      <mass value="120.90442642947052"/>
+      <inertia ixx="129.47263" ixy="-0.023527" ixz="-0.011644" iyy="73.136591" iyz="-1.726202" izz="85.878511"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/chassis.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/chassis.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Linear axis moving link -->
+  <link name="linear_axis_moving_link">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.04578298705746098 0.1200817119996848 0.03993803302086685"/>
+      <mass value="14.04925448455695"/>
+      <inertia ixx="0.061984" ixy="-0.003503" ixz="0.001551" iyy="0.069314" iyz="0.000564" izz="0.125682"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0.158 -0.115 -0.58775"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/linear_axis_moving_link.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0.158 -0.115 -0.58775"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/linear_axis_moving_link.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  
+  <!-- Base link inertia -->
+  <link name="base_link_inertia">
+    <visual>
+      <origin rpy="0 0 3.141592653589793" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/visual/base.dae"/>
+      </geometry>
+      <material name="LightGrey"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 3.141592653589793" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/base.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="4.0"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <inertia ixx="0.0061063308908" ixy="0.0" ixz="0.0" iyy="0.0061063308908" iyz="0.0" izz="0.01125"/>
+    </inertial>
+  </link>
+
+  <!-- Shoulder link -->
+  <link name="shoulder_link">
+    <visual>
+      <origin rpy="0 0 3.141592653589793" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/visual/shoulder.dae"/>
+      </geometry>
+      <material name="LightGrey"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 3.141592653589793" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/shoulder.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="7.369"/>
+      <origin rpy="1.570796326794897 0 0" xyz="0.021 -0.027 0.0"/>
+      <inertia ixx="0.03408" ixy="2e-05" ixz="-0.00425" iyy="0.03529" iyz="8e-05" izz="0.02156"/>
+    </inertial>
+  </link>
+
+  <!-- Upper arm link -->
+  <link name="upper_arm_link">
+    <visual>
+      <origin rpy="1.5707963267948966 0 -1.5707963267948966" xyz="0 0 0.1762"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/visual/upperarm.dae"/>
+      </geometry>
+      <material name="LightGrey"/>
+    </visual>
+    <collision>
+      <origin rpy="1.5707963267948966 0 -1.5707963267948966" xyz="0 0 0.1762"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/upperarm.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="13.051"/>
+      <origin rpy="0 0 0" xyz="-0.2327 0.0 0.158"/>
+      <inertia ixx="0.02814" ixy="5e-05" ixz="-0.01561" iyy="0.77068" iyz="2e-05" izz="0.76943"/>
+    </inertial>
+  </link>
+
+  <!-- Forearm link -->
+  <link name="forearm_link">
+    <visual>
+      <origin rpy="1.5707963267948966 0 -1.5707963267948966" xyz="0 0 0.0393"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/visual/forearm.dae"/>
+      </geometry>
+      <material name="LightGrey"/>
+    </visual>
+    <collision>
+      <origin rpy="1.5707963267948966 0 -1.5707963267948966" xyz="0 0 0.0393"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/forearm.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="3.989"/>
+      <origin rpy="0 0 0" xyz="-0.33155 0.0 0.068"/>
+      <inertia ixx="0.01014" ixy="8e-05" ixz="0.00916" iyy="0.30928" iyz="0.0" izz="0.30646"/>
+    </inertial>
+  </link>
+
+  <!-- Wrist 1 link -->
+  <link name="wrist_1_link">
+    <visual>
+      <origin rpy="1.5707963267948966 0 0" xyz="0 0 -0.135"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/visual/wrist1.dae"/>
+      </geometry>
+      <material name="LightGrey"/>
+    </visual>
+    <collision>
+      <origin rpy="1.5707963267948966 0 0" xyz="0 0 -0.135"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/wrist1.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="2.1"/>
+      <origin rpy="1.570796326794897 0 0" xyz="0.0 -0.018 0.007"/>
+      <inertia ixx="0.00296" ixy="-1e-05" ixz="0.0" iyy="0.00222" iyz="-0.00024" izz="0.00258"/>
+    </inertial>
+  </link>
+
+  <!-- Wrist 2 link -->
+  <link name="wrist_2_link">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 -0.12"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/visual/wrist2.dae"/>
+      </geometry>
+      <material name="LightGrey"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 -0.12"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/wrist2.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1.98"/>
+      <origin rpy="-1.570796326794897 0 0" xyz="0.0 0.018 -0.007"/>
+      <inertia ixx="0.00296" ixy="-1e-05" ixz="0.0" iyy="0.00222" iyz="-0.00024" izz="0.00258"/>
+    </inertial>
+  </link>
+
+  <!-- Wrist 3 link -->
+  <link name="wrist_3_link">
+    <visual>
+      <origin rpy="1.5707963267948966 0 0" xyz="0 0 -0.1168"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/visual/wrist3.dae"/>
+      </geometry>
+      <material name="LightGrey"/>
+    </visual>
+    <collision>
+      <origin rpy="1.5707963267948966 0 0" xyz="0 0 -0.1168"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/wrist3.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.615"/>
+      <origin rpy="0 0 0" xyz="0.0 0.0 -0.026"/>
+      <inertia ixx="0.0004" ixy="0.0" ixz="0.0" iyy="0.00041" iyz="0.0" izz="0.00034"/>
+    </inertial>
+  </link>
+
+  <!-- Flange link -->
+  <link name="flange">
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.03728118086660814 0.018695800368391968 -3.198525872116775e-05"/>
+      <mass value="0.22118456222294286"/>
+      <inertia ixx="8.2e-05" ixy="9e-06" ixz="1e-06" iyy="0.000449" iyz="0.0" izz="0.000396"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0.106799 -0.48391 -2.071936"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/flange.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0.106799 -0.48391 -2.071936"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/flange.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Tool0 link -->
+  <link name="tool0">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.004750071182531013 0.012079339797564148 -0.0007100996519442404"/>
+      <mass value="0.3126115786693621"/>
+      <inertia ixx="9e-05" ixy="-1e-06" ixz="8e-06" iyy="0.000144" iyz="-0.0" izz="7.9e-05"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0.106799 -0.51591 -2.071936"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/tool0.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0.106799 -0.51591 -2.071936"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/tool0.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- FT frame link -->
+  <link name="ft_frame"/>
+
+  <!-- ROS-Industrial base frame -->
+  <link name="base"/>
+
+  <!-- JOINTS -->
+  
+  <!-- Base joint fixes base_link to the environment -->
+  <joint name="base_joint" type="fixed">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <parent link="world"/>
+    <child link="base_link"/>
+  </joint>
+
+  <!-- Chassis joint -->
+  <joint name="chassis_joint" type="fixed">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <parent link="world"/>
+    <child link="chassis"/>
+  </joint>
+
+  <!-- Linear axis moving joint -->
+  <joint name="linear_axis_moving_joint" type="prismatic">
+    <origin rpy="0 0 0" xyz="-0.158 0.115 0.58775"/>
+    <parent link="base_link"/>
+    <child link="linear_axis_moving_link"/>
+    <axis xyz="0.0 1.0 0.0"/>
+    <limit effort="100" lower="0.05" upper="1.95" velocity="100"/>
+    <dynamics damping="0.1" friction="0.1"/>
+  </joint>
+  
+  <!-- Base link to base link inertia -->
+  <joint name="base_link-base_link_inertia" type="fixed">
+    <parent link="linear_axis_moving_link"/>
+    <child link="base_link_inertia"/>
+    <origin rpy="0 0 3.141592653589793" xyz="0.0506 0.075 0.056791"/>
+  </joint>
+  
+  <!-- Main serial chain joints -->
+  <joint name="shoulder_pan_joint" type="revolute">
+    <parent link="base_link_inertia"/>
+    <child link="shoulder_link"/>
+    <origin rpy="0 0 0" xyz="0 0 0.1807"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="330.0" lower="-6.283185307179586" upper="6.283185307179586" velocity="2.0943951023931953"/>
+    <dynamics damping="0.1" friction="0.1"/>
+  </joint>
+
+  <joint name="shoulder_lift_joint" type="revolute">
+    <parent link="shoulder_link"/>
+    <child link="upper_arm_link"/>
+    <origin rpy="1.570796327 0 0" xyz="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="330.0" lower="-6.283185307179586" upper="6.283185307179586" velocity="2.0943951023931953"/>
+    <dynamics damping="0.1" friction="0.1"/>
+  </joint>
+
+  <joint name="elbow_joint" type="revolute">
+    <parent link="upper_arm_link"/>
+    <child link="forearm_link"/>
+    <origin rpy="0 0 0" xyz="-0.6127 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="150.0" lower="-3.141592653589793" upper="3.141592653589793" velocity="3.141592653589793"/>
+    <dynamics damping="0.1" friction="0.1"/>
+  </joint>
+
+  <joint name="wrist_1_joint" type="revolute">
+    <parent link="forearm_link"/>
+    <child link="wrist_1_link"/>
+    <origin rpy="0 0 0" xyz="-0.57155 0 0.17415"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="54.0" lower="-6.283185307179586" upper="6.283185307179586" velocity="3.141592653589793"/>
+    <dynamics damping="0.1" friction="0.1"/>
+  </joint>
+
+  <joint name="wrist_2_joint" type="revolute">
+    <parent link="wrist_1_link"/>
+    <child link="wrist_2_link"/>
+    <origin rpy="1.570796327 0 0" xyz="0 -0.11985 -2.458164590756244e-11"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="54.0" lower="-6.283185307179586" upper="6.283185307179586" velocity="3.141592653589793"/>
+    <dynamics damping="0.1" friction="0.1"/>
+  </joint>
+
+  <joint name="wrist_3_joint" type="revolute">
+    <parent link="wrist_2_link"/>
+    <child link="wrist_3_link"/>
+    <origin rpy="1.570796326589793 3.141592653589793 3.141592653589793" xyz="0 0.11655 -2.390480459346185e-11"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="54.0" lower="-6.283185307179586" upper="6.283185307179586" velocity="3.141592653589793"/>
+    <dynamics damping="0.1" friction="0.1"/>
+  </joint>
+
+  <!-- FT frame joint -->
+  <joint name="wrist_3_link-ft_frame" type="fixed">
+    <parent link="wrist_3_link"/>
+    <child link="ft_frame"/>
+    <origin rpy="3.141592653589793 0 0" xyz="0 0 0"/>
+  </joint>
+
+  <!-- Base fixed joint -->
+  <joint name="base_link-base_fixed_joint" type="fixed">
+    <origin rpy="0 0 3.141592653589793" xyz="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="base"/>
+  </joint>
+
+  <!-- Flange joint -->
+  <joint name="wrist_3-flange" type="fixed">
+    <parent link="wrist_3_link"/>
+    <child link="flange"/>
+    <origin rpy="1.5707963267948966 0 0" xyz="0 0 0.0423"/>
+  </joint>
+
+  <!-- Tool0 joint -->
+  <joint name="flange-tool0" type="fixed">
+    <origin rpy="0 0 0" xyz="0 0.031 0"/>
+    <parent link="flange"/>
+    <child link="tool0"/>
+  </joint>
+
+  <!-- ROS2 Control -->
+  <ros2_control name="ifarlab_ros2_control" type="system">
+    <hardware>
+      <xacro:if value="$(arg use_fake_hardware)">
+        <plugin>mock_components/GenericSystem</plugin>
+        <param name="fake_sensor_commands">$(arg fake_sensor_commands)</param>
+        <param name="state_following_offset">0.0</param>
+        <param name="calculate_dynamics">true</param>
+      </xacro:if>
+      <xacro:unless value="$(arg use_fake_hardware)">
+        <plugin>ifarlab_driver/URPositionHardwareInterface</plugin>
+        <param name="robot_ip">$(arg robot_ip)</param>
+        <param name="script_filename">$(arg script_filename)</param>
+        <param name="output_recipe_filename">$(arg output_recipe_filename)</param>
+        <param name="input_recipe_filename">$(arg input_recipe_filename)</param>
+        <param name="headless_mode">$(arg headless_mode)</param>
+        <param name="reverse_port">$(arg reverse_port)</param>
+        <param name="script_sender_port">$(arg script_sender_port)</param>
+        <param name="reverse_ip">$(arg reverse_ip)</param>
+        <param name="script_command_port">$(arg script_command_port)</param>
+        <param name="trajectory_port">$(arg trajectory_port)</param>
+        <param name="tf_prefix"></param>
+        <param name="non_blocking_read">true</param>
+        <param name="servoj_gain">2000</param>
+        <param name="servoj_lookahead_time">0.03</param>
+        <param name="use_tool_communication">$(arg use_tool_communication)</param>
+        <param name="tool_voltage">$(arg tool_voltage)</param>
+        <param name="tool_parity">$(arg tool_parity)</param>
+        <param name="tool_baud_rate">$(arg tool_baud_rate)</param>
+        <param name="tool_stop_bits">$(arg tool_stop_bits)</param>
+        <param name="tool_rx_idle_chars">$(arg tool_rx_idle_chars)</param>
+        <param name="tool_tx_idle_chars">$(arg tool_tx_idle_chars)</param>
+        <param name="tool_device_name">$(arg tool_device_name)</param>
+        <param name="tool_tcp_port">$(arg tool_tcp_port)</param>
+        <param name="keep_alive_count">2</param>
+      </xacro:unless>
+    </hardware>
+
+     <!-- <joint name="linear_axis_moving_joint">
+      <command_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.2</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+    </joint> -->
+    
+    <!-- UR10e joints -->
+    <joint name="shoulder_pan_joint">
+      <command_interface name="position"/>
+      <command_interface name="velocity"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+
+    <joint name="shoulder_lift_joint">
+      <command_interface name="position"/>
+      <command_interface name="velocity"/>
+      <state_interface name="position">
+        <!-- initial position for the FakeSystem and simulation -->
+        <param name="initial_value">-1.57</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="elbow_joint">
+      <command_interface name="position"/>
+      <command_interface name="velocity"/>
+      <state_interface name="position">
+        <!-- initial position for the FakeSystem and simulation -->
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="wrist_1_joint">
+      <command_interface name="position"/>
+      <command_interface name="velocity"/>
+      <state_interface name="position">
+        <!-- initial position for the FakeSystem and simulation -->
+        <param name="initial_value">-1.57</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="wrist_2_joint">
+      <command_interface name="position"/>
+      <command_interface name="velocity"/>
+      <state_interface name="position">
+        <!-- initial position for the FakeSystem and simulation -->
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="wrist_3_joint">
+      <command_interface name="position"/>
+      <command_interface name="velocity"/>
+      <state_interface name="position">
+        <!-- initial position for the FakeSystem and simulation -->
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <sensor name="tcp_fts_sensor">
+      <state_interface name="force.x"/>
+      <state_interface name="force.y"/>
+      <state_interface name="force.z"/>
+      <state_interface name="torque.x"/>
+      <state_interface name="torque.y"/>
+      <state_interface name="torque.z"/>
+    </sensor>
+    <sensor name="tcp_pose">
+      <state_interface name="position.x"/>
+      <state_interface name="position.y"/>
+      <state_interface name="position.z"/>
+      <state_interface name="orientation.x"/>
+      <state_interface name="orientation.y"/>
+      <state_interface name="orientation.z"/>
+      <state_interface name="orientation.w"/>
+    </sensor>
+    <gpio name="speed_scaling">
+      <state_interface name="speed_scaling_factor"/>
+      <param name="initial_speed_scaling_factor">1</param>
+      <command_interface name="target_speed_fraction_cmd"/>
+      <command_interface name="target_speed_fraction_async_success"/>
+    </gpio>
+    <gpio name="gpio">
+      <command_interface name="standard_digital_output_cmd_0"/>
+      <command_interface name="standard_digital_output_cmd_1"/>
+      <command_interface name="standard_digital_output_cmd_2"/>
+      <command_interface name="standard_digital_output_cmd_3"/>
+      <command_interface name="standard_digital_output_cmd_4"/>
+      <command_interface name="standard_digital_output_cmd_5"/>
+      <command_interface name="standard_digital_output_cmd_6"/>
+      <command_interface name="standard_digital_output_cmd_7"/>
+      <command_interface name="standard_digital_output_cmd_8"/>
+      <command_interface name="standard_digital_output_cmd_9"/>
+      <command_interface name="standard_digital_output_cmd_10"/>
+      <command_interface name="standard_digital_output_cmd_11"/>
+      <command_interface name="standard_digital_output_cmd_12"/>
+      <command_interface name="standard_digital_output_cmd_13"/>
+      <command_interface name="standard_digital_output_cmd_14"/>
+      <command_interface name="standard_digital_output_cmd_15"/>
+      <command_interface name="standard_digital_output_cmd_16"/>
+      <command_interface name="standard_digital_output_cmd_17"/>
+      <command_interface name="standard_analog_output_cmd_0"/>
+      <command_interface name="standard_analog_output_cmd_1"/>
+      <command_interface name="analog_output_domain_cmd"/>
+      <command_interface name="tool_voltage_cmd"/>
+      <command_interface name="io_async_success"/>
+      <state_interface name="digital_output_0"/>
+      <state_interface name="digital_output_1"/>
+      <state_interface name="digital_output_2"/>
+      <state_interface name="digital_output_3"/>
+      <state_interface name="digital_output_4"/>
+      <state_interface name="digital_output_5"/>
+      <state_interface name="digital_output_6"/>
+      <state_interface name="digital_output_7"/>
+      <state_interface name="digital_output_8"/>
+      <state_interface name="digital_output_9"/>
+      <state_interface name="digital_output_10"/>
+      <state_interface name="digital_output_11"/>
+      <state_interface name="digital_output_12"/>
+      <state_interface name="digital_output_13"/>
+      <state_interface name="digital_output_14"/>
+      <state_interface name="digital_output_15"/>
+      <state_interface name="digital_output_16"/>
+      <state_interface name="digital_output_17"/>
+      <state_interface name="digital_input_0"/>
+      <state_interface name="digital_input_1"/>
+      <state_interface name="digital_input_2"/>
+      <state_interface name="digital_input_3"/>
+      <state_interface name="digital_input_4"/>
+      <state_interface name="digital_input_5"/>
+      <state_interface name="digital_input_6"/>
+      <state_interface name="digital_input_7"/>
+      <state_interface name="digital_input_8"/>
+      <state_interface name="digital_input_9"/>
+      <state_interface name="digital_input_10"/>
+      <state_interface name="digital_input_11"/>
+      <state_interface name="digital_input_12"/>
+      <state_interface name="digital_input_13"/>
+      <state_interface name="digital_input_14"/>
+      <state_interface name="digital_input_15"/>
+      <state_interface name="digital_input_16"/>
+      <state_interface name="digital_input_17"/>
+      <state_interface name="standard_analog_output_0"/>
+      <state_interface name="standard_analog_output_1"/>
+      <state_interface name="standard_analog_input_0"/>
+      <state_interface name="standard_analog_input_1"/>
+      <state_interface name="analog_io_type_0"/>
+      <state_interface name="analog_io_type_1"/>
+      <state_interface name="analog_io_type_2"/>
+      <state_interface name="analog_io_type_3"/>
+      <state_interface name="tool_mode"/>
+      <state_interface name="tool_output_voltage"/>
+      <state_interface name="tool_output_current"/>
+      <state_interface name="tool_temperature"/>
+      <state_interface name="tool_analog_input_0"/>
+      <state_interface name="tool_analog_input_1"/>
+      <state_interface name="tool_analog_input_type_0"/>
+      <state_interface name="tool_analog_input_type_1"/>
+      <state_interface name="robot_mode"/>
+      <state_interface name="robot_status_bit_0"/>
+      <state_interface name="robot_status_bit_1"/>
+      <state_interface name="robot_status_bit_2"/>
+      <state_interface name="robot_status_bit_3"/>
+      <state_interface name="safety_mode"/>
+      <state_interface name="safety_status_bit_0"/>
+      <state_interface name="safety_status_bit_1"/>
+      <state_interface name="safety_status_bit_2"/>
+      <state_interface name="safety_status_bit_3"/>
+      <state_interface name="safety_status_bit_4"/>
+      <state_interface name="safety_status_bit_5"/>
+      <state_interface name="safety_status_bit_6"/>
+      <state_interface name="safety_status_bit_7"/>
+      <state_interface name="safety_status_bit_8"/>
+      <state_interface name="safety_status_bit_9"/>
+      <state_interface name="safety_status_bit_10"/>
+      <state_interface name="program_running"/>
+    </gpio>
+    <gpio name="payload">
+      <command_interface name="mass"/>
+      <command_interface name="cog.x"/>
+      <command_interface name="cog.y"/>
+      <command_interface name="cog.z"/>
+      <command_interface name="payload_async_success"/>
+    </gpio>
+    <gpio name="resend_robot_program">
+      <command_interface name="resend_robot_program_cmd"/>
+      <command_interface name="resend_robot_program_async_success"/>
+    </gpio>
+    <gpio name="hand_back_control">
+      <command_interface name="hand_back_control_cmd"/>
+      <command_interface name="hand_back_control_async_success"/>
+    </gpio>
+    <gpio name="zero_ftsensor">
+      <command_interface name="zero_ftsensor_cmd"/>
+      <command_interface name="zero_ftsensor_async_success"/>
+    </gpio>
+    <gpio name="freedrive_mode">
+      <command_interface name="async_success"/>
+      <command_interface name="enable"/>
+      <command_interface name="abort"/>
+    </gpio>
+    <gpio name="system_interface">
+      <state_interface name="initialized"/>
+    </gpio>
+    <gpio name="force_mode">
+      <command_interface name="task_frame_x"/>
+      <command_interface name="task_frame_y"/>
+      <command_interface name="task_frame_z"/>
+      <command_interface name="task_frame_rx"/>
+      <command_interface name="task_frame_ry"/>
+      <command_interface name="task_frame_rz"/>
+      <command_interface name="selection_vector_x"/>
+      <command_interface name="selection_vector_y"/>
+      <command_interface name="selection_vector_z"/>
+      <command_interface name="selection_vector_rx"/>
+      <command_interface name="selection_vector_ry"/>
+      <command_interface name="selection_vector_rz"/>
+      <command_interface name="wrench_x"/>
+      <command_interface name="wrench_y"/>
+      <command_interface name="wrench_z"/>
+      <command_interface name="wrench_rx"/>
+      <command_interface name="wrench_ry"/>
+      <command_interface name="wrench_rz"/>
+      <command_interface name="limits_x"/>
+      <command_interface name="limits_y"/>
+      <command_interface name="limits_z"/>
+      <command_interface name="limits_rx"/>
+      <command_interface name="limits_ry"/>
+      <command_interface name="limits_rz"/>
+      <command_interface name="type"/>
+      <command_interface name="damping"/>
+      <command_interface name="gain_scaling"/>
+      <command_interface name="disable_cmd"/>
+      <command_interface name="force_mode_async_success"/>
+    </gpio>
+    <gpio name="trajectory_passthrough">
+      <command_interface name="setpoint_positions_0"/>
+      <command_interface name="setpoint_positions_1"/>
+      <command_interface name="setpoint_positions_2"/>
+      <command_interface name="setpoint_positions_3"/>
+      <command_interface name="setpoint_positions_4"/>
+      <command_interface name="setpoint_positions_5"/>
+      <command_interface name="setpoint_velocities_0"/>
+      <command_interface name="setpoint_velocities_1"/>
+      <command_interface name="setpoint_velocities_2"/>
+      <command_interface name="setpoint_velocities_3"/>
+      <command_interface name="setpoint_velocities_4"/>
+      <command_interface name="setpoint_velocities_5"/>
+      <command_interface name="setpoint_accelerations_0"/>
+      <command_interface name="setpoint_accelerations_1"/>
+      <command_interface name="setpoint_accelerations_2"/>
+      <command_interface name="setpoint_accelerations_3"/>
+      <command_interface name="setpoint_accelerations_4"/>
+      <command_interface name="setpoint_accelerations_5"/>
+      <command_interface name="transfer_state"/>
+      <command_interface name="time_from_start"/>
+      <command_interface name="abort"/>
+    </gpio>
+    <gpio name="get_robot_software_version">
+      <state_interface name="get_version_major"/>
+      <state_interface name="get_version_minor"/>
+      <state_interface name="get_version_build"/>
+      <state_interface name="get_version_bugfix"/>
+    </gpio>
+  </ros2_control>
+  <gazebo>
+    <plugin filename="gz-sim-joint-trajectory-controller-system" name="gz::sim::systems::JointTrajectoryController">
+      <joint_name>shoulder_pan_joint</joint_name>
+      <initial_position>0.0</initial_position>
+      <position_p_gain>5.0</position_p_gain>
+      <position_i_gain>0.05</position_i_gain>
+      <position_d_gain>0.1</position_d_gain>
+      <position_i_min>-1</position_i_min>
+      <position_i_max>1</position_i_max>
+      <position_cmd_min>-1000</position_cmd_min>
+      <position_cmd_max>1000</position_cmd_max>
+      
+      <joint_name>shoulder_lift_joint</joint_name>
+      <initial_position>-1.57</initial_position>
+      <position_p_gain>5.0</position_p_gain>
+      <position_i_gain>0.05</position_i_gain>
+      <position_d_gain>0.1</position_d_gain>
+      <position_i_min>-1</position_i_min>
+      <position_i_max>1</position_i_max>
+      <position_cmd_min>-1000</position_cmd_min>
+      <position_cmd_max>1000</position_cmd_max>
+      
+      <joint_name>elbow_joint</joint_name>
+      <initial_position>0.0</initial_position>
+      <position_p_gain>5.0</position_p_gain>
+      <position_i_gain>0.05</position_i_gain>
+      <position_d_gain>0.1</position_d_gain>
+      <position_i_min>-1</position_i_min>
+      <position_i_max>1</position_i_max>
+      <position_cmd_min>-1000</position_cmd_min>
+      <position_cmd_max>1000</position_cmd_max>
+      
+      <joint_name>wrist_1_joint</joint_name>
+      <initial_position>-1.57</initial_position>
+      <position_p_gain>5.0</position_p_gain>
+      <position_i_gain>0.05</position_i_gain>
+      <position_d_gain>0.1</position_d_gain>
+      <position_i_min>-0.5</position_i_min>
+      <position_i_max>0.5</position_i_max>
+      <position_cmd_min>-500</position_cmd_min>
+      <position_cmd_max>500</position_cmd_max>
+
+      <joint_name>wrist_2_joint</joint_name>
+      <initial_position>0.0</initial_position>
+      <position_p_gain>5.0</position_p_gain>
+      <position_i_gain>0.05</position_i_gain>
+      <position_d_gain>0.1</position_d_gain>
+      <position_i_min>-0.5</position_i_min>
+      <position_i_max>0.5</position_i_max>
+      <position_cmd_min>-500</position_cmd_min>
+      <position_cmd_max>500</position_cmd_max>
+
+      <joint_name>wrist_3_joint</joint_name>
+      <initial_position>0.0</initial_position>
+      <position_p_gain>5.0</position_p_gain>
+      <position_i_gain>0.05</position_i_gain>
+      <position_d_gain>0.1</position_d_gain>
+      <position_i_min>-0.5</position_i_min>
+      <position_i_max>0.5</position_i_max>
+      <position_cmd_min>-500</position_cmd_min>
+      <position_cmd_max>500</position_cmd_max>
+    </plugin>
+
+    <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
+      <joint_name>linear_axis_moving_joint</joint_name>
+      <initial_position>0.2</initial_position> 
+    </plugin>
+    <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
+      <joint_name>shoulder_pan_joint</joint_name>
+      <initial_position>0.0</initial_position> 
+    </plugin>
+    <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
+      <joint_name>shoulder_lift_joint</joint_name>
+      <initial_position>-1.57</initial_position> 
+    </plugin>
+    <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
+      <joint_name>elbow_joint</joint_name>
+      <initial_position>0.0</initial_position> 
+    </plugin>
+    <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
+      <joint_name>wrist_1_joint</joint_name>
+      <initial_position>-1.57</initial_position> 
+    </plugin>
+    <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
+      <joint_name>wrist_2_joint</joint_name>
+      <initial_position>0.0</initial_position> 
+    </plugin>
+    <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
+      <joint_name>wrist_3_joint</joint_name>
+      <initial_position>0.0</initial_position> 
+    </plugin>
+
+  </gazebo>
+  <!-- Add URDF transmission elements (for ros_control) -->
+  <!--<xacro:ur_arm_transmission prefix="${prefix}" hw_interface="${transmission_hw_interface}" />-->
+  <!-- Placeholder for ros2_control transmission which don't yet exist -->
+  <!-- links -  main serial chain -->
+</robot>

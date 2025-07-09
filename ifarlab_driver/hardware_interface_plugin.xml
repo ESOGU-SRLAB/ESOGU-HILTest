@@ -1,0 +1,9 @@
+<library path="ifarlab_driver_plugin">
+  <class name="ifarlab_driver/URPositionHardwareInterface"
+         type="ifarlab_driver::URPositionHardwareInterface"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+		ROS2 Control System Driver for the IFARLAB environment.
+    </description>
+  </class>
+</library>
