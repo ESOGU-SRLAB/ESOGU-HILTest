@@ -748,25 +748,22 @@
   </xacro:if>
 
   <xacro:if value="$(arg load_linear_axis_ros2_control)">
-    <ros2_control name="linear_axis_ros2_control" type="system">
+    <ros2_control name="linear_axis_topic_hardware" type="system">
       <hardware>
-        <!-- Use GenericSystem to allow joint_state_broadcaster to see this joint -->
-        <plugin>mock_components/GenericSystem</plugin>
-        <param name="fake_sensor_commands">false</param> <!-- We will get real data from Python adapter -->
-        <param name="state_following_offset">0.0</param>
-        <param name="calculate_dynamics">false</param>
+        <plugin>topic_based_ros2_control/TopicBasedSystem</plugin>
+        <param name="joint_commands_topic">/linear_axis_joint_commands</param>
+        <param name="joint_states_topic">/linear_axis_joint_states</param> 
+        <param name="sum_wrapped_joint_states">true</param> 
       </hardware>
       <joint name="linear_axis_moving_joint">
-        <state_interface name="position">
-          <param name="initial_value">0.20</param> <!-- Initial position in meters -->
-        </state_interface>
+        <command_interface name="position"/>
+        <state_interface name="position"/>
         <state_interface name="velocity"/>
-        <!-- NO command_interface here, as commands go directly to Festo via Python adapter -->
       </joint>
     </ros2_control>
   </xacro:if>
 
-  <gazebo>
+  <!--<gazebo>
     <plugin filename="gz-sim-joint-trajectory-controller-system" name="gz::sim::systems::JointTrajectoryController">
       <joint_name>shoulder_pan_joint</joint_name>
       <initial_position>0.0</initial_position>
@@ -858,7 +855,7 @@
       <initial_position>0.0</initial_position> 
     </plugin>
 
-  </gazebo>
+  </gazebo>-->
   <!-- Add URDF transmission elements (for ros_control) -->
   <!--<xacro:ur_arm_transmission prefix="${prefix}" hw_interface="${transmission_hw_interface}" />-->
   <!-- Placeholder for ros2_control transmission which don't yet exist -->

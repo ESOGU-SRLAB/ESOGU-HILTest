@@ -21,7 +21,7 @@ class LinearAxisControllerAdapter(Node):
         self.declare_parameter('ip_address', '192.168.4.1') # Festo EdCon IP adresi
         self.declare_parameter('port', 502) # Festo EdCon Modbus TCP portu
         self.declare_parameter('joint_name', 'linear_axis_moving_joint')
-        self.declare_parameter('update_frequency_hz', 50.0) # Festo'dan okuma ve ROS'a yayınlama frekansı
+        self.declare_parameter('update_frequency_hz', 125.0) # Festo'dan okuma ve ROS'a yayınlama frekansı
         self.declare_parameter('command_send_frequency_hz', 20.0) # Festo'ya komut gönderme frekansı
 
         self.axis_id = self.get_parameter('axis_id').get_parameter_value().integer_value
@@ -88,8 +88,8 @@ class LinearAxisControllerAdapter(Node):
         # ROS2 Subscriptions ve Publishers
         # JointPositionController'dan gelen hedef pozisyon komutlarını dinle
         self.subscription = self.create_subscription(
-            Float64,
-            f'/linear_axis_controller/commands', # JointPositionController'ın varsayılan komut topiki
+            JointState,
+            f'/linear_axis_joint_commands', # JointPositionController'ın varsayılan komut topiki
             self.command_callback,
             10
         )
@@ -97,7 +97,7 @@ class LinearAxisControllerAdapter(Node):
 
         # JointState mesajlarını yayınla (robot_state_publisher ve MoveIt2 için)
         qos_profile = QoSProfile(depth=10)
-        self.joint_state_publisher = self.create_publisher(JointState, 'joint_states', qos_profile)
+        self.joint_state_publisher = self.create_publisher(JointState, '/linear_axis_joint_states', qos_profile)
         self.status_timer = self.create_timer(1.0 / self.update_frequency_hz, self.publish_status)
 
         # Festo'ya hareket komutlarını göndermek için timer
@@ -105,12 +105,23 @@ class LinearAxisControllerAdapter(Node):
 
         self.get_logger().info(f'Linear axis adapter node başlatıldı. Joint: {self.joint_name}')
 
-    def command_callback(self, msg: Float64):
+    def command_callback(self, msg: JointState):
         """
-        ROS2 JointPositionController'dan gelen hedef pozisyonu alır (metre cinsinden).
+        TopicBasedSystem'dan gelen JointState mesajını alır.
+        Sadece kendi ekleminin (linear_axis_moving_joint) pozisyon komutunu ayrıştırır.
         """
-        self.target_position_meters = msg.data
-        self.get_logger().info(f'Alınan hedef pozisyon (metre): {self.target_position_meters:.4f}')
+        try:
+            # Kendi ekleminin indeksini bul
+            joint_index = msg.name.index(self.joint_name)
+            if joint_index < len(msg.position):
+                self.target_position_meters = msg.position[joint_index]
+                self.get_logger().info(f'Alınan hedef pozisyon (metre) from JointState: {self.target_position_meters:.4f}')
+            else:
+                self.get_logger().warn(f"Pozisyon verisi '{self.joint_name}' eklemi için bulunamadı.")
+        except ValueError:
+            self.get_logger().warn(f"'{self.joint_name}' eklemi JointState mesajında bulunamadı.")
+        except Exception as e:
+            self.get_logger().error(f"JointState mesajını işlerken hata: {e}")
 
     def send_motion_command(self):
         """
