@@ -276,19 +276,19 @@
   <!-- Flange link -->
   <link name="flange">
     <inertial>
-      <origin rpy="0 0 0" xyz="-0.03728118086660814 0.018695800368391968 -3.198525872116775e-05"/>
+      <origin xyz="-0.03728162809838195 0.018695973189327475 -3.153802695221586e-05" rpy="0 0 0"/>
       <mass value="0.22118456222294286"/>
-      <inertia ixx="8.2e-05" ixy="9e-06" ixz="1e-06" iyy="0.000449" iyz="0.0" izz="0.000396"/>
+      <inertia ixx="8.2e-05" iyy="0.000449" izz="0.000396" ixy="9e-06" iyz="0.0" ixz="1e-06"/>
     </inertial>
     <visual>
-      <origin rpy="0 0 0" xyz="0.106799 -0.48391 -2.071936"/>
+      <origin xyz="0.101076 -0.479689 -2.038963" rpy="0 0 0"/>
       <geometry>
         <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/flange.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="silver"/>
     </visual>
     <collision>
-      <origin rpy="0 0 0" xyz="0.106799 -0.48391 -2.071936"/>
+      <origin xyz="0.101076 -0.479689 -2.038963" rpy="0 0 0"/>
       <geometry>
         <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/flange.stl" scale="0.001 0.001 0.001"/>
       </geometry>
@@ -298,24 +298,45 @@
   <!-- Tool0 link -->
   <link name="tool0">
     <inertial>
-      <origin rpy="0 0 0" xyz="0.004750071182531013 0.012079339797564148 -0.0007100996519442404"/>
-      <mass value="0.3126115786693621"/>
-      <inertia ixx="9e-05" ixy="-1e-06" ixz="8e-06" iyy="0.000144" iyz="-0.0" izz="7.9e-05"/>
+      <origin xyz="0.031978209664333734 0.009487643895727982 -0.0023590848543579845" rpy="0 0 0"/>
+      <mass value="0.22117646672670696"/>
+      <inertia ixx="0.000168" iyy="0.000224" izz="0.000174" ixy="-1e-06" iyz="2e-06" ixz="3.9e-05"/>
     </inertial>
     <visual>
-      <origin rpy="0 0 0" xyz="0.106799 -0.51591 -2.071936"/>
+      <origin xyz="0.101076 -0.511689 -2.018963" rpy="0 0 0"/>
       <geometry>
         <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/tool0.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="silver"/>
     </visual>
     <collision>
-      <origin rpy="0 0 0" xyz="0.106799 -0.51591 -2.071936"/>
+      <origin xyz="0.101076 -0.511689 -2.018963" rpy="0 0 0"/>
       <geometry>
         <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/tool0.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
   </link>
+
+  <link name="sick_camera">
+    <inertial>
+      <origin xyz="0.011899959116537379 2.36666709563238e-07 -0.009131584672412929" rpy="0 0 0"/>
+      <mass value="0.8666400000000004"/>
+      <inertia ixx="0.000468" iyy="0.000527" izz="0.000365" ixy="-0.0" iyz="0.0" ixz="-0.000192"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.050747 -0.514689 -2.001557" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/sick_camera.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0.050747 -0.514689 -2.001557" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="file:////home/cem/colcon_ws/src/ifarlab/ifarlab_description/meshes/collision/sick_camera.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+</link>
 
   <!-- FT frame link -->
   <link name="ft_frame"/>
@@ -429,14 +450,20 @@
   <joint name="wrist_3-flange" type="fixed">
     <parent link="wrist_3_link"/>
     <child link="flange"/>
-    <origin rpy="1.5707963267948966 0 0" xyz="0 0 0.0423"/>
+    <origin rpy="1.5707963267948966 0 0" xyz="0 0 0.0"/>
   </joint>
 
   <!-- Tool0 joint -->
   <joint name="flange-tool0" type="fixed">
-    <origin rpy="0 0 0" xyz="0 0.031 0"/>
+    <origin rpy="0 0 0" xyz="0 0.032 -0.02"/>
     <parent link="flange"/>
     <child link="tool0"/>
+  </joint>
+
+  <joint name="tool0-sick_joint" type="fixed">
+    <origin xyz="0.050329 0.003 -0.017406" rpy="0 0 0"/>
+    <parent link="tool0"/>
+    <child link="sick_camera"/>
   </joint>
 
   <!-- ROS2 Control -->
