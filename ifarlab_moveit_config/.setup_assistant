@@ -1,0 +1,25 @@
+moveit_setup_assistant_config:
+  urdf:
+    package: ifarlab_description
+    relative_path: urdf/ifarlab_description.urdf
+  srdf:
+    relative_path: config/ifarlab.srdf
+  package_settings:
+    author_name: Cem Suha Yilmaz
+    author_email: cshyilmaz@gmail.com
+    generated_timestamp: 1752161455
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity
+  modified_urdf:
+    xacros:
+      - control_xacro
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity

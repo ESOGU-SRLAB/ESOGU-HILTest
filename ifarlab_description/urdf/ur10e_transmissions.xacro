@@ -63,6 +63,16 @@
       </actuator>
     </transmission>
 
+    <transmission name="${prefix}linear_axis_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="linear_axis_moving_joint">
+        <hardwareInterface>${hw_interface}</hardwareInterface>
+      </joint>
+      <actuator name="${prefix}linear_axis_motor">
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+
   </xacro:macro>
 
 </robot>

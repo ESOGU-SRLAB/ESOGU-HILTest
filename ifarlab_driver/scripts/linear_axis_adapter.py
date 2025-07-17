@@ -127,9 +127,9 @@ class LinearAxisControllerAdapter(Node):
         """
         Hedef pozisyona hareket komutunu Festo EdCon'a gönderir.
         """
-        if not self.connected_to_festo or not self.motion_handler:
-            self.get_logger().warn("Festo EdCon MotionHandler başlatılmadı veya bağlı değil. Komut gönderilemiyor.")
-            return
+        # if not self.connected_to_festo or not self.motion_handler:
+        #     self.get_logger().warn("Festo EdCon MotionHandler başlatılmadı veya bağlı değil. Komut gönderilemiyor.")
+        #     return
 
         # Mevcut pozisyon ile hedef pozisyon arasında küçük bir fark varsa komut gönder
         # Örneğin, 0.5 mm'den büyük bir fark varsa hareket ettir

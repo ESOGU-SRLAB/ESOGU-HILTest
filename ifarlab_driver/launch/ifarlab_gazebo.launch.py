@@ -303,7 +303,42 @@ def launch_setup(context, *args, **kwargs):
         output="screen"
     )
 
+    gazebo = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [FindPackageShare("ros_gz_sim"), "/launch/gz_sim.launch.py"]
+        ),
+        launch_arguments=[("gz_args", " -r -v 4 empty.sdf")],
+        # condition=IfCondition(gui),
+    )
+    gazebo_headless = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [FindPackageShare("ros_gz_sim"), "/launch/gz_sim.launch.py"]
+        ),
+        launch_arguments=[("gz_args", ["--headless-rendering -s -r -v 3 empty.sdf"])],
+        # condition=UnlessCondition(gui),
+    )
     
+    gazebo_bridge = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        arguments=["/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock"],
+        output="screen",
+        parameters=[{"use_sim_time": True}], # Gazebo köprüsüne use_sim_time eklendi
+    )
+
+    gz_spawn_entity = Node(
+        package="ros_gz_sim",
+        executable="create",
+        output="screen",
+        arguments=[
+            "-string",
+            robot_description_content,
+            "-name",
+            "ifarlab",
+            "-allow_renaming",
+            "true",
+        ],
+    )
   
     # Spawn controllers
     def controller_spawner(controllers, active=True):
@@ -351,8 +386,8 @@ def launch_setup(context, *args, **kwargs):
     ]
 
     nodes_to_start = [
-        control_node,
-        ur_control_node,
+        # control_node,
+        # ur_control_node,
         dashboard_client_node,
         robot_state_helper_node,
         tool_communication_node,
@@ -361,6 +396,10 @@ def launch_setup(context, *args, **kwargs):
         robot_state_publisher_node,
         rviz_node,
         linear_axis_adapter_node,
+        gazebo,
+        gazebo_headless,
+        gazebo_bridge,
+        gz_spawn_entity,
     ] + controller_spawners
 
     return nodes_to_start
